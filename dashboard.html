@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>SaaS Config Dashboard</title>
+
+    <!-- Load Tailwind CSS -->
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+
+      body {
+        font-family: "Inter", sans-serif;
+
+        background-color: #f3f4f6;
+
+        min-height: 100vh;
+      }
+
+      .card {
+        background-color: white;
+
+        border-radius: 1rem;
+
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+    </style>
+  </head>
+
+  <body class="p-6 flex items-center justify-center">
+    <div class="card w-full max-w-2xl p-8 space-y-6">
+      <h1 class="text-3xl font-bold text-gray-900 text-center">
+        Game Configuration Generator
+      </h1>
+
+      <!-- Status Bar for Firebase Connection -->
+
+      <div
+        id="connectionStatus"
+        class="p-2 rounded-lg text-sm text-center font-medium bg-yellow-100 text-yellow-800"
+      >
+        Initializing Firebase...
+      </div>
+
+      <!-- Configuration Inputs -->
+
+      <div class="space-y-4">
+        <div>
+          <label
+            for="gameType"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >Select Game Template</label
+          >
+
+          <select
+            id="gameType"
+            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+            onchange="updateUI()"
+          >
+            <option value="clicker">1. Fast Clicker</option>
+
+            <option value="quiz">2. Quiz Master</option>
+
+            <option value="memory">3. Memory Match</option>
+          </select>
+        </div>
+
+        <div>
+          <label
+            for="gameTitle"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >Game Title</label
+          >
+
+          <input
+            type="text"
+            id="gameTitle"
+            value="My Real Firebase Game"
+            class="w-full p-3 border border-gray-300 rounded-lg"
+            placeholder="Enter a title"
+          />
+        </div>
+
+        <!-- Dynamic Config Settings -->
+
+        <div
+          id="dynamicConfig"
+          class="border p-4 rounded-lg bg-gray-50 space-y-3"
+        >
+          <!-- Content will be injected by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Action Button -->
+
+      <button
+        id="generateBtn"
+        onclick="generateConfig()"
+        class="w-full flex items-center justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150"
+      >
+        Generate Config & Get Link
+      </button>
+
+      <!-- Result Area -->
+
+      <div id="resultArea" class="hidden space-y-3 pt-4 border-t mt-4">
+        <h3 class="text-lg font-bold text-green-700">
+          Configuration Saved to Firestore!
+        </h3>
+
+        <p class="text-sm text-gray-600">
+          The Game Client will fetch this data using the unique ID below:
+        </p>
+
+        <div class="flex space-x-2">
+          <input
+            type="text"
+            id="gameLink"
+            class="flex-grow p-3 border border-green-300 bg-green-50 rounded-lg text-sm truncate"
+            readonly
+          />
+
+          <button
+            onclick="copyLink()"
+            class="p-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-150 text-sm"
+            id="copyBtn"
+          >
+            Copy
+          </button>
+        </div>
+
+        <p id="configIdDisplay" class="text-xs text-gray-500"></p>
+      </div>
+
+      <!-- Message/Error Box -->
+
+      <div
+        id="messageBox"
+        class="hidden mt-4 p-3 rounded-lg text-sm"
+        role="alert"
+      ></div>
+
+      <p class="text-xs text-gray-400 mt-4">
+        Current App ID: <span id="appIdDisplay">N/A</span>
+      </p>
+    </div>
+
+    <!-- Firebase Imports and Script -->
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+
+      import {
+        getAuth,
+        signInAnonymously,
+        signInWithCustomToken,
+      } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+      import {
+        getFirestore,
+        doc,
+        setDoc,
+        collection,
+        setLogLevel,
+      } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+      // IMPORTANT: Global variables are provided by the Canvas environment
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyBswmEuKEW2iZE1HINqoOd41eVbtKT6tI4",
+        authDomain: "gameconfigdashboard.firebaseapp.com",
+        projectId: "gameconfigdashboard",
+        storageBucket: "gameconfigdashboard.firebasestorage.app",
+        messagingSenderId: "704597526858",
+        appId: "1:704597526858:web:219e314baa38298ffe99b3",
+        measurementId: "G-04M7FKLR5M",
+      };
+
+      const appId = firebaseConfig.appId;
+      const initialAuthToken = null;
+
+      let db;
+
+      let isAuthReady = false;
+
+      const connectionStatus = document.getElementById("connectionStatus");
+
+      setLogLevel("debug"); // Enable Firestore logging
+
+      // --- Core Firebase Initialization ---
+
+      async function initializeFirebase() {
+        try {
+          if (Object.keys(firebaseConfig).length === 0) {
+            throw new Error("Missing Firebase configuration.");
+          }
+
+          const app = initializeApp(firebaseConfig);
+
+          db = getFirestore(app);
+
+          const auth = getAuth(app);
+
+          // Authenticate using the provided token for real data write access
+
+          if (initialAuthToken) {
+            await signInWithCustomToken(auth, initialAuthToken);
+          } else {
+            await signInAnonymously(auth);
+          }
+
+          document.getElementById("appIdDisplay").textContent = appId;
+
+          isAuthReady = true;
+
+          connectionStatus.textContent =
+            "SUCCESS: Connected to Real Firebase Firestore.";
+
+          connectionStatus.classList.replace("bg-yellow-100", "bg-green-100");
+
+          connectionStatus.classList.replace(
+            "text-yellow-800",
+
+            "text-green-800"
+          );
+        } catch (error) {
+          console.error("Firebase Initialization Error:", error);
+
+          displayMessage(
+            `FATAL ERROR: Could not connect to Firebase. Data cannot be saved. Reason: ${error.message}`,
+
+            "error"
+          );
+
+          connectionStatus.textContent = "FAILURE: Firebase Connection Error.";
+
+          connectionStatus.classList.replace("bg-yellow-100", "bg-red-100");
+
+          connectionStatus.classList.replace("text-yellow-800", "text-red-800");
+        }
+      }
+
+      // --- Utility Functions ---
+
+      function displayMessage(message, type = "info") {
+        const box = document.getElementById("messageBox");
+
+        box.textContent = message;
+
+        box.className = `mt-4 p-3 rounded-lg text-sm ${
+          type === "error"
+            ? "bg-red-100 text-red-800"
+            : type === "success"
+            ? "bg-green-100 text-green-800"
+            : "bg-blue-100 text-blue-800"
+        }`;
+
+        box.classList.remove("hidden");
+      }
+
+      function copyLink() {
+        const linkInput = document.getElementById("gameLink");
+
+        linkInput.select();
+
+        linkInput.setSelectionRange(0, 99999);
+
+        try {
+          document.execCommand("copy");
+
+          document.getElementById("copyBtn").textContent = "COPIED!";
+
+          setTimeout(() => {
+            document.getElementById("copyBtn").textContent = "Copy";
+          }, 2000);
+        } catch (err) {
+          console.error("Failed to copy text: ", err);
+        }
+      }
+
+      function getGameConfig() {
+        const gameType = document.getElementById("gameType").value;
+
+        const title = document.getElementById("gameTitle").value;
+
+        const config = {
+          // IMPORTANT: These are the three fields the client MUST read
+
+          gameType: gameType,
+
+          title: title,
+
+          data: {},
+        };
+
+        // Collect dynamic settings based on gameType
+
+        if (gameType === "clicker") {
+          config.data.targetScore =
+            parseInt(document.getElementById("targetScore").value) || 10;
+
+          config.data.durationSeconds =
+            parseInt(document.getElementById("durationSeconds").value) || 10;
+
+          config.data.buttonText =
+            document.getElementById("buttonText").value || "Smash It!";
+        } else if (gameType === "quiz") {
+          config.data.question =
+            document.getElementById("question").value ||
+            "What is the capital of France?";
+
+          config.data.answer =
+            document.getElementById("answer").value || "Paris";
+
+          config.data.timeLimit =
+            parseInt(document.getElementById("timeLimit").value) || 30;
+        } else if (gameType === "memory") {
+          const pairs =
+            parseInt(document.getElementById("numPairs").value) || 4;
+
+          config.data.numPairs = pairs;
+
+          config.data.cardIcons = document
+
+            .getElementById("cardIcons")
+
+            .value.split(",")
+
+            .map((s) => s.trim())
+
+            .filter(Boolean);
+        }
+
+        return config;
+      }
+
+      // --- Main Logic: Save to Firestore ---
+
+      window.generateConfig = async function () {
+        if (!isAuthReady) {
+          displayMessage(
+            "Cannot save: Firebase connection failed. See error status above.",
+
+            "error"
+          );
+
+          return;
+        }
+
+        const configData = getGameConfig();
+
+        // 1. Generate a unique ID (UUID is robust)
+
+        const configId = crypto.randomUUID();
+
+        // 2. Define the public path: /artifacts/{appId}/public/data/game_configs/{configId}
+
+        const configPath = `artifacts/${appId}/public/data/game_configs`;
+
+        const configDocRef = doc(collection(db, configPath), configId);
+
+        try {
+          // 3. Save the configuration object
+
+          await setDoc(configDocRef, configData);
+
+          // 4. Construct the game client URL
+
+          const currentUrl = window.location.href;
+
+          const baseUrl = currentUrl.substring(
+            0,
+
+            currentUrl.lastIndexOf("/") + 1
+          );
+
+          // We point the link directly to the game_client.html file
+
+          const gameLink = `${baseUrl}game_client.html?configId=${configId}`;
+
+          // 5. Update UI
+
+          document.getElementById("gameLink").value = gameLink;
+
+          document.getElementById(
+            "configIdDisplay"
+          ).textContent = `Configuration ID (UUID): ${configId}`;
+
+          document.getElementById("resultArea").classList.remove("hidden");
+
+          displayMessage(
+            "Configuration saved! Ready to load in Game Client.",
+
+            "success"
+          );
+          window.open(gameLink, "_blank");
+        } catch (e) {
+          console.error("Firestore Save Error: ", e);
+
+          displayMessage(`FATAL SAVE ERROR: ${e.message}`, "error");
+        }
+      };
+
+      // --- Dynamic UI Rendering ---
+
+      window.updateUI = function () {
+        const gameType = document.getElementById("gameType").value;
+
+        const dynamicConfig = document.getElementById("dynamicConfig");
+
+        let html =
+          '<h3 class="text-lg font-semibold text-gray-800 mb-2">Game-Specific Settings</h3>';
+
+        if (gameType === "clicker") {
+          html += `
+
+                    <div>
+
+                        <label for="targetScore" class="block text-sm font-medium text-gray-700">Target Score</label>
+
+                        <input type="number" id="targetScore" value="10" class="w-full p-2 border border-gray-300 rounded-lg" min="1">
+
+                    </div>
+
+                    <div>
+
+                        <label for="durationSeconds" class="block text-sm font-medium text-gray-700">Time Limit (Seconds)</label>
+
+                        <input type="number" id="durationSeconds" value="10" class="w-full p-2 border border-gray-300 rounded-lg" min="5">
+
+                    </div>
+
+                    <div>
+
+                        <label for="buttonText" class="block text-sm font-medium text-gray-700">Button Text</label>
+
+                        <input type="text" id="buttonText" value="Smash It!" class="w-full p-2 border border-gray-300 rounded-lg">
+
+                    </div>
+
+                `;
+        } else if (gameType === "quiz") {
+          html += `
+
+                    <div>
+
+                        <label for="question" class="block text-sm font-medium text-gray-700">Question Text</label>
+
+                        <input type="text" id="question" value="What is the capital of France?" class="w-full p-2 border border-gray-300 rounded-lg">
+
+                    </div>
+
+                    <div>
+
+                        <label for="answer" class="block text-sm font-medium text-gray-700">Correct Answer (Case Sensitive)</label>
+
+                        <input type="text" id="answer" value="Paris" class="w-full p-2 border border-gray-300 rounded-lg">
+
+                    </div>
+
+                    <div>
+
+                        <label for="timeLimit" class="block text-sm font-medium text-gray-700">Time Limit (Seconds)</label>
+
+                        <input type="number" id="timeLimit" value="30" class="w-full p-2 border border-gray-300 rounded-lg" min="10">
+
+                    </div>
+
+                `;
+        } else if (gameType === "memory") {
+          html += `
+
+                    <div>
+
+                        <label for="numPairs" class="block text-sm font-medium text-gray-700">Number of Pairs (2-8)</label>
+
+                        <input type="number" id="numPairs" value="4" class="w-full p-2 border border-gray-300 rounded-lg" min="2" max="8">
+
+                    </div>
+
+                    <div>
+
+                        <label for="cardIcons" class="block text-sm font-medium text-gray-700">Card Icons (Comma separated Emojis/Symbols)</label>
+
+                        <input type="text" id="cardIcons" value="🧠,⭐,🍎,🚀,💡,🔑,🛡️,✨" class="w-full p-2 border border-gray-300 rounded-lg">
+
+                        <p class="text-xs text-gray-500 mt-1">Example: 🧠,⭐,🍎,🚀 (Need at least the number of pairs selected)</p>
+
+                    </div>
+
+                `;
+        }
+
+        dynamicConfig.innerHTML = html;
+      };
+
+      // Initialize on load
+
+      document.addEventListener("DOMContentLoaded", () => {
+        initializeFirebase();
+
+        updateUI();
+      });
+    </script>
+  </body>
+</html>
