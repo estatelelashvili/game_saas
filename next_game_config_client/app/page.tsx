@@ -1,5 +1,5 @@
 import React from "react";
-import { Providers } from "./lib/Providers";
+// import { Providers } from "./lib/Providers";
 // Note: You may need to create a mock for useFirebase to run this component
 import Dashboard from "./dashboard";
 
@@ -9,8 +9,8 @@ export default function HomePage() {
   return (
     // Wrapping the entire application tree with the Providers component
     // ensures Redux and Query contexts are available to all children.
-    <Providers>
-      <Dashboard />
-    </Providers>
+    // <Providers>
+    <Dashboard />
+    // </Providers>
   );
 }

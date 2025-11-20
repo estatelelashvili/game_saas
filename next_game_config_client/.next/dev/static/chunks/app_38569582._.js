@@ -91,9 +91,13 @@ var _s = __turbopack_context__.k.signature(), _s1 = __turbopack_context__.k.sign
 // --- 2. Configuration & Context Setup ---
 // Placeholder for environment variables in a Next.js context
 const NEXT_PUBLIC_FIREBASE_CONFIG = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "your-project.firebaseapp.com",
-    projectId: "your-project-id"
+    apiKey: "AIzaSyBswmEuKEW2iZE1HINqoOd41eVbtKT6tI4",
+    authDomain: "gameconfigdashboard.firebaseapp.com",
+    projectId: "gameconfigdashboard",
+    storageBucket: "gameconfigdashboard.firebasestorage.app",
+    messagingSenderId: "704597526858",
+    appId: "1:704597526858:web:219e314baa38298ffe99b3",
+    measurementId: "G-04M7FKLR5M"
 };
 // Create the context, initialized to null (or undefined)
 // We assert it won't be null when used within the provider
@@ -168,7 +172,7 @@ const FirebaseProvider = ({ children })=>{
         children: children
     }, void 0, false, {
         fileName: "[project]/app/lib/FirebaseProvider.tsx",
-        lineNumber: 136,
+        lineNumber: 140,
         columnNumber: 5
     }, ("TURBOPACK compile-time value", void 0));
 };
@@ -191,7 +195,8 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$firebase$2f$firestore$2f$dist$2f$esm$2f$index$2e$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/node_modules/firebase/firestore/dist/esm/index.esm.js [app-client] (ecmascript) <locals>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$firestore$2f$dist$2f$index$2e$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/@firebase/firestore/dist/index.esm.js [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$tanstack$2f$react$2d$query$2f$build$2f$modern$2f$useMutation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/@tanstack/react-query/build/modern/useMutation.js [app-client] (ecmascript)"); // Explicitly importing UseMutationResult type
+// IMPORTANT: We explicitly import UseMutationResult and rely on TanStack Query v5 conventions
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$tanstack$2f$react$2d$query$2f$build$2f$modern$2f$useMutation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/@tanstack/react-query/build/modern/useMutation.js [app-client] (ecmascript)");
 // --- NEW IMPORTS ---
 var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$store$2f$hooks$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/app/store/hooks.ts [app-client] (ecmascript)"); // Import corrected typed hooks
 // --- END NEW IMPORTS ---
@@ -207,20 +212,21 @@ var _s = __turbopack_context__.k.signature(), _s1 = __turbopack_context__.k.sign
 ;
 ;
 // --- 2. UI Components (Typed) ---
+// FIX: Hooks must be called unconditionally at the top level of the component.
+// The conditional rendering logic must be based on the result of the hooks.
 const Notification = ()=>{
     _s();
-    // USE CORRECTED HOOK
+    // Hooks must be called unconditionally
     const dispatch = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$store$2f$hooks$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAppDispatch"])();
-    // Use the typed selector and assert the structure of the notification state
     const { message, type } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$store$2f$hooks$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAppSelector"])({
         "Notification.useAppSelector": (state)=>state.notification
     }["Notification.useAppSelector"]);
-    if (!message) return null;
     const colorMap = {
         success: "bg-green-100 text-green-800 border-green-400",
         error: "bg-red-100 text-red-800 border-red-400",
         info: "bg-blue-100 text-blue-800 border-blue-400"
     };
+    // This useEffect is now called unconditionally on every render.
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "Notification.useEffect": ()=>{
             if (message) {
@@ -231,11 +237,15 @@ const Notification = ()=>{
                     "Notification.useEffect": ()=>clearTimeout(timer)
                 })["Notification.useEffect"];
             }
+        // IMPORTANT: If message is empty, the effect runs and does nothing,
+        // but it ensures the Hook order is maintained.
         }
     }["Notification.useEffect"], [
         message,
         dispatch
     ]);
+    // Conditional rendering occurs AFTER all hooks have been called.
+    if (!message) return null;
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: `p-4 border-l-4 rounded-lg shadow-lg mb-6 ${colorMap[type]}`,
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -243,12 +253,12 @@ const Notification = ()=>{
             children: message
         }, void 0, false, {
             fileName: "[project]/app/dashboard.tsx",
-            lineNumber: 97,
+            lineNumber: 103,
             columnNumber: 7
         }, ("TURBOPACK compile-time value", void 0))
     }, void 0, false, {
         fileName: "[project]/app/dashboard.tsx",
-        lineNumber: 94,
+        lineNumber: 100,
         columnNumber: 5
     }, ("TURBOPACK compile-time value", void 0));
 };
@@ -274,7 +284,7 @@ const LoadingSpinner = ()=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$
                 strokeWidth: "4"
             }, void 0, false, {
                 fileName: "[project]/app/dashboard.tsx",
-                lineNumber: 109,
+                lineNumber: 115,
                 columnNumber: 5
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
@@ -283,19 +293,18 @@ const LoadingSpinner = ()=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$
                 d: "M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             }, void 0, false, {
                 fileName: "[project]/app/dashboard.tsx",
-                lineNumber: 117,
+                lineNumber: 123,
                 columnNumber: 5
             }, ("TURBOPACK compile-time value", void 0))
         ]
     }, void 0, true, {
         fileName: "[project]/app/dashboard.tsx",
-        lineNumber: 103,
+        lineNumber: 109,
         columnNumber: 3
     }, ("TURBOPACK compile-time value", void 0));
 _c1 = LoadingSpinner;
 function Dashboard() {
     _s1();
-    // USE CORRECTED HOOK
     const dispatch = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$store$2f$hooks$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAppDispatch"])();
     const { db, userId, appId, firebaseReady } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$lib$2f$FirebaseProvider$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useFirebase"])();
     // State Hooks with explicit types
@@ -338,6 +347,7 @@ function Dashboard() {
     const saveConfigToFirestore = async (config)=>{
         if (!db) throw new Error("Firestore connection is not ready.");
         const configId = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : Date.now().toString() + Math.random().toString(36).substring(2, 9);
+        // Using the public path to allow the game client to access the config without authentication
         const configPath = `artifacts/${appId}/public/data/game_configs`;
         const configCollectionRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$firestore$2f$dist$2f$index$2e$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["collection"])(db, configPath);
         const configDocRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$firestore$2f$dist$2f$index$2e$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["doc"])(configCollectionRef, configId);
@@ -354,10 +364,6 @@ function Dashboard() {
             configId
         };
     };
-    // Corrected destructuring for useMutation result to ensure type inference works correctly.
-    // We explicitly type the result to UseMutationResult to aid TypeScript, although
-    // it's often optional. The original code should have worked, so this modification
-    // ensures maximum compatibility with recent TanStack Query versions.
     const { mutate, isPending, isSuccess } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$tanstack$2f$react$2d$query$2f$build$2f$modern$2f$useMutation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useMutation"])({
         mutationFn: saveConfigToFirestore,
         onSuccess: {
@@ -370,6 +376,7 @@ function Dashboard() {
                     message: "Configuration successfully saved to Firestore!",
                     type: "success"
                 }));
+                // Opens the client in a new tab, ready for the next step (client implementation)
                 if ("TURBOPACK compile-time truthy", 1) {
                     window.open(link, "_blank");
                 }
@@ -588,7 +595,7 @@ function Dashboard() {
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(Notification, {}, void 0, false, {
                     fileName: "[project]/app/dashboard.tsx",
-                    lineNumber: 374,
+                    lineNumber: 376,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -602,7 +609,7 @@ function Dashboard() {
                                     children: "Game Type"
                                 }, void 0, false, {
                                     fileName: "[project]/app/dashboard.tsx",
-                                    lineNumber: 378,
+                                    lineNumber: 380,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
@@ -615,7 +622,7 @@ function Dashboard() {
                                             children: "Clicker Challenge"
                                         }, void 0, false, {
                                             fileName: "[project]/app/dashboard.tsx",
-                                            lineNumber: 388,
+                                            lineNumber: 390,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
@@ -623,7 +630,7 @@ function Dashboard() {
                                             children: "Timed Quiz"
                                         }, void 0, false, {
                                             fileName: "[project]/app/dashboard.tsx",
-                                            lineNumber: 389,
+                                            lineNumber: 391,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
@@ -631,19 +638,19 @@ function Dashboard() {
                                             children: "Memory Match (Placeholder)"
                                         }, void 0, false, {
                                             fileName: "[project]/app/dashboard.tsx",
-                                            lineNumber: 390,
+                                            lineNumber: 392,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/dashboard.tsx",
-                                    lineNumber: 381,
+                                    lineNumber: 383,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/dashboard.tsx",
-                            lineNumber: 377,
+                            lineNumber: 379,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -653,7 +660,7 @@ function Dashboard() {
                                     children: "Game Title"
                                 }, void 0, false, {
                                     fileName: "[project]/app/dashboard.tsx",
-                                    lineNumber: 395,
+                                    lineNumber: 397,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -664,13 +671,13 @@ function Dashboard() {
                                     required: true
                                 }, void 0, false, {
                                     fileName: "[project]/app/dashboard.tsx",
-                                    lineNumber: 398,
+                                    lineNumber: 400,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/dashboard.tsx",
-                            lineNumber: 394,
+                            lineNumber: 396,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -681,14 +688,14 @@ function Dashboard() {
                                     children: "Game-Specific Settings"
                                 }, void 0, false, {
                                     fileName: "[project]/app/dashboard.tsx",
-                                    lineNumber: 410,
+                                    lineNumber: 412,
                                     columnNumber: 13
                                 }, this),
                                 renderGameSpecificFields()
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/dashboard.tsx",
-                            lineNumber: 409,
+                            lineNumber: 411,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -699,7 +706,7 @@ function Dashboard() {
                                 children: [
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(LoadingSpinner, {}, void 0, false, {
                                         fileName: "[project]/app/dashboard.tsx",
-                                        lineNumber: 423,
+                                        lineNumber: 425,
                                         columnNumber: 17
                                     }, this),
                                     "Saving Config..."
@@ -707,13 +714,13 @@ function Dashboard() {
                             }, void 0, true) : "Generate Config & Open Client"
                         }, void 0, false, {
                             fileName: "[project]/app/dashboard.tsx",
-                            lineNumber: 416,
+                            lineNumber: 418,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/dashboard.tsx",
-                    lineNumber: 376,
+                    lineNumber: 378,
                     columnNumber: 9
                 }, this),
                 generatedLink && isSuccess && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -724,7 +731,7 @@ function Dashboard() {
                             children: "Game Client Link Generated (Click to Copy):"
                         }, void 0, false, {
                             fileName: "[project]/app/dashboard.tsx",
-                            lineNumber: 434,
+                            lineNumber: 436,
                             columnNumber: 13
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -741,13 +748,13 @@ function Dashboard() {
                             className: "w-full bg-white p-2 border border-dashed border-green-500 rounded text-sm cursor-pointer"
                         }, void 0, false, {
                             fileName: "[project]/app/dashboard.tsx",
-                            lineNumber: 437,
+                            lineNumber: 439,
                             columnNumber: 13
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/dashboard.tsx",
-                    lineNumber: 433,
+                    lineNumber: 435,
                     columnNumber: 11
                 }, this)
             ]

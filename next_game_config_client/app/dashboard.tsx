@@ -9,7 +9,8 @@ import {
   CollectionReference,
   DocumentData,
 } from "firebase/firestore";
-import { useMutation, UseMutationResult } from "@tanstack/react-query"; // Explicitly importing UseMutationResult type
+// IMPORTANT: We explicitly import UseMutationResult and rely on TanStack Query v5 conventions
+import { useMutation, UseMutationResult } from "@tanstack/react-query";
 
 // --- NEW IMPORTS ---
 import { useAppDispatch, useAppSelector } from "./store/hooks"; // Import corrected typed hooks
@@ -67,15 +68,14 @@ interface MutationResult {
 
 // --- 2. UI Components (Typed) ---
 
+// FIX: Hooks must be called unconditionally at the top level of the component.
+// The conditional rendering logic must be based on the result of the hooks.
 const Notification: FC = () => {
-  // USE CORRECTED HOOK
+  // Hooks must be called unconditionally
   const dispatch = useAppDispatch();
-  // Use the typed selector and assert the structure of the notification state
   const { message, type } = useAppSelector(
     (state) => state.notification as NotificationState
   );
-
-  if (!message) return null;
 
   const colorMap: Record<NotificationType, string> = {
     success: "bg-green-100 text-green-800 border-green-400",
@@ -83,12 +83,18 @@ const Notification: FC = () => {
     info: "bg-blue-100 text-blue-800 border-blue-400",
   };
 
+  // This useEffect is now called unconditionally on every render.
   useEffect(() => {
     if (message) {
       const timer = setTimeout(() => dispatch(clearNotification()), 5000);
       return () => clearTimeout(timer);
     }
+    // IMPORTANT: If message is empty, the effect runs and does nothing,
+    // but it ensures the Hook order is maintained.
   }, [message, dispatch]);
+
+  // Conditional rendering occurs AFTER all hooks have been called.
+  if (!message) return null;
 
   return (
     <div
@@ -125,7 +131,6 @@ const LoadingSpinner: FC = () => (
 // --- 3. Dashboard Component (Typed) ---
 
 export default function Dashboard() {
-  // USE CORRECTED HOOK
   const dispatch = useAppDispatch();
 
   const { db, userId, appId, firebaseReady } = useFirebase();
@@ -173,6 +178,7 @@ export default function Dashboard() {
         ? crypto.randomUUID()
         : Date.now().toString() + Math.random().toString(36).substring(2, 9);
 
+    // Using the public path to allow the game client to access the config without authentication
     const configPath = `artifacts/${appId}/public/data/game_configs`;
     const configCollectionRef: CollectionReference<DocumentData> = collection(
       db as Firestore,
@@ -193,50 +199,44 @@ export default function Dashboard() {
     return { configId };
   };
 
-  // Corrected destructuring for useMutation result to ensure type inference works correctly.
-  // We explicitly type the result to UseMutationResult to aid TypeScript, although
-  // it's often optional. The original code should have worked, so this modification
-  // ensures maximum compatibility with recent TanStack Query versions.
   const {
     mutate,
     isPending,
     isSuccess,
-  }: UseMutationResult<MutationResult, Error, MutationPayload> = useMutation<
-    MutationResult,
-    Error,
-    MutationPayload
-  >({
-    mutationFn: saveConfigToFirestore,
-    onSuccess: (data) => {
-      const configId = data.configId;
-      const baseUrl =
-        typeof window !== "undefined"
-          ? window.location.origin
-          : "https://example.com";
-      const link = `${baseUrl}/game/${configId}`;
+  }: UseMutationResult<MutationResult, Error, MutationPayload, unknown> =
+    useMutation<MutationResult, Error, MutationPayload, unknown>({
+      mutationFn: saveConfigToFirestore,
+      onSuccess: (data) => {
+        const configId = data.configId;
+        const baseUrl =
+          typeof window !== "undefined"
+            ? window.location.origin
+            : "https://example.com";
+        const link = `${baseUrl}/game/${configId}`;
 
-      setGeneratedLink(link);
-      dispatch(
-        showNotification({
-          message: "Configuration successfully saved to Firestore!",
-          type: "success",
-        })
-      );
+        setGeneratedLink(link);
+        dispatch(
+          showNotification({
+            message: "Configuration successfully saved to Firestore!",
+            type: "success",
+          })
+        );
 
-      if (typeof window !== "undefined") {
-        window.open(link, "_blank");
-      }
-    },
-    onError: (error: Error) => {
-      console.error("Firestore Save Error:", error);
-      dispatch(
-        showNotification({
-          message: `Failed to save config: ${error.message}`,
-          type: "error",
-        })
-      );
-    },
-  });
+        // Opens the client in a new tab, ready for the next step (client implementation)
+        if (typeof window !== "undefined") {
+          window.open(link, "_blank");
+        }
+      },
+      onError: (error: Error) => {
+        console.error("Firestore Save Error:", error);
+        dispatch(
+          showNotification({
+            message: `Failed to save config: ${error.message}`,
+            type: "error",
+          })
+        );
+      },
+    });
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -371,6 +371,8 @@ export default function Dashboard() {
             {firebaseReady ? "Connected" : "Connecting..."}
           </span>
         </p>
+        {/* Notification component is rendered here. Since its hooks are now unconditional, 
+                    this will not break the rules of hooks. */}
         <Notification />
 
         <form onSubmit={handleSubmit} className="space-y-4">
